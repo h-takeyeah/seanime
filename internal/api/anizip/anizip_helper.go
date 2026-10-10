@@ -4,6 +4,9 @@ func (m *Media) GetTitle() string {
 	if m == nil {
 		return ""
 	}
+	if len(m.Titles["ja"]) > 0 {
+		return m.Titles["ja"]
+	}
 	if len(m.Titles["en"]) > 0 {
 		return m.Titles["en"]
 	}
@@ -53,6 +56,10 @@ func (m *Media) GetOffset() int {
 }
 
 func (e *Episode) GetTitle() string {
+	ja, ok := e.Title["ja"]
+	if ok {
+		return ja
+	}
 	eng, ok := e.Title["en"]
 	if ok {
 		return eng
