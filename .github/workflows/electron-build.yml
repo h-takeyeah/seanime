@@ -15,30 +15,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # IDs:
-        # - seanime-denshi-darwin-arm
-        # - seanime-denshi-darwin-intel
-        # - seanime-denshi-linux
-        # - seanime-denshi-windows
+        # Linux only for this fork: only the Linux Electron build is produced
         include:
-          # For Mac
-          - os: 'macos-latest'
-            id: 'seanime-denshi-darwin-arm64'
-            go_binary_id: 'seanime-server-darwin' # Artifact: go-seanime-server-darwin (contains both arm64 and x86_64)
-            electron_args: '--mac --arm64'
-            mpv_prism_target: 'darwin-arm64'
-          # For Linux
           - os: 'ubuntu-latest'
             id: 'seanime-denshi-linux-x64'
             go_binary_id: 'seanime-server-linux' # Artifact: go-seanime-server-linux (contains x86_64)
             electron_args: '--linux --x64'
             mpv_prism_target: 'linux-x64'
-          # For Windows
-          - os: 'windows-latest'
-            id: 'seanime-denshi-windows-x64'
-            go_binary_id: 'seanime-server-windows' # Artifact: go-seanime-server-windows (contains x86_64)
-            electron_args: '--win --x64'
-            mpv_prism_target: 'win32-x64'
 
     runs-on: ${{ matrix.os }}
     outputs:
@@ -67,7 +50,6 @@ jobs:
 
       # Install dependencies
       - name: Install dependencies (Ubuntu) 📦
-        if: matrix.os == 'ubuntu-latest'
         run: |
           sudo apt-get update
           sudo apt-get install -y libgtk-3-dev libnss3-dev libxss-dev libasound2-dev
@@ -85,13 +67,8 @@ jobs:
         run: mv web-denshi seanime-denshi/
         shell: bash
 
-      - name: Ensure binaries folder exists (UNIX)
-        if: matrix.os == 'macos-latest' || matrix.os == 'ubuntu-latest'
+      - name: Ensure binaries folder exists
         run: mkdir -p ./seanime-denshi/binaries
-
-      - name: Ensure binaries folder exists (Windows)
-        if: matrix.os == 'windows-latest'
-        run: mkdir .\seanime-denshi\binaries
 
       # Download the server binaries based on matrix.go_binary_id
       - name: Download server binaries 📥
@@ -101,38 +78,11 @@ jobs:
           path: ./seanime-denshi/binaries
 
       # Extract server binaries
-      #      - name: Extract server binaries (macOS x64) 📂
-      #        if: matrix.os == 'macos-latest' && matrix.id == 'seanime-denshi-darwin-x64'
-      #        # Extracts seanime-server-darwin-arm64 and seanime-server-darwin-amd64
-      #        # Only keep seanime-server-darwin-amd64
-      #        run: |
-      #          tar -xf ./seanime-denshi/binaries/binaries-${{ matrix.go_binary_id }}.tar -C ./seanime-denshi/binaries
-      #          # Remove the other binary
-      #          rm -rf ./seanime-denshi/binaries/seanime-server-darwin-arm64
-
-      - name: Extract server binaries (macOS arm64) 📂
-        if: matrix.os == 'macos-latest' && matrix.id == 'seanime-denshi-darwin-arm64'
-        # Extracts seanime-server-darwin-arm64 and seanime-server-darwin-amd64
-        # Only keep seanime-server-darwin-arm64
-        run: |
-          tar -xf ./seanime-denshi/binaries/binaries-${{ matrix.go_binary_id }}.tar -C ./seanime-denshi/binaries
-          # Remove the other binary
-          rm -rf ./seanime-denshi/binaries/seanime-server-darwin-amd64
-          rm -rf ./seanime-denshi/binaries/binaries-${{ matrix.go_binary_id }}.tar
-
-      - name: Extract server binaries (Linux) 📂
-        if: matrix.os == 'ubuntu-latest' && matrix.id == 'seanime-denshi-linux-x64'
+      - name: Extract server binaries 📂
         # Extracts seanime-server-linux-amd64
         run: |
           tar -xf ./seanime-denshi/binaries/binaries-${{ matrix.go_binary_id }}.tar -C ./seanime-denshi/binaries
           rm -rf ./seanime-denshi/binaries/binaries-${{ matrix.go_binary_id }}.tar
-
-      - name: Extract server binaries (Windows) 📂
-        if: matrix.os == 'windows-latest'
-        # Extracts seanime-server-windows-amd64
-        run: |
-          7z x ".\seanime-denshi\binaries\binaries-${{ matrix.go_binary_id }}.zip" "-o./seanime-denshi/binaries/"
-          del ".\seanime-denshi\binaries\binaries-${{ matrix.go_binary_id }}.zip"
 
       #      # Copy app icon
       #      - name: Copy app icon 📝
