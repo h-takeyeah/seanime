@@ -1,0 +1,100 @@
+name: Sync jp-meta with upstream
+
+on:
+  schedule:
+    - cron: "0 18 * * *" # 03:00 JST
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout jp-meta
+        uses: actions/checkout@v4
+        with:
+          ref: jp-meta
+          fetch-depth: 0
+
+      - name: Configure git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Fetch upstream tags
+        run: |
+          git remote add upstream https://github.com/5rahim/seanime.git
+          git fetch upstream --tags
+
+      - name: Determine latest upstream release tag
+        id: latest
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG=$(gh api repos/5rahim/seanime/releases/latest --jq .tag_name)
+          echo "Latest upstream release: $TAG"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+
+      - name: Rebase onto latest tag
+        id: rebase
+        run: |
+          BEFORE=$(git rev-parse HEAD)
+          if git rebase "${{ steps.latest.outputs.tag }}"; then
+            AFTER=$(git rev-parse HEAD)
+            if [ "$BEFORE" != "$AFTER" ]; then
+              echo "changed=true" >> "$GITHUB_OUTPUT"
+            else
+              echo "changed=false" >> "$GITHUB_OUTPUT"
+            fi
+          else
+            git rebase --abort
+            exit 1
+          fi
+
+      - name: Set up Go
+        if: steps.rebase.outputs.changed == 'true'
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Sanity-build patched package
+        if: steps.rebase.outputs.changed == 'true'
+        run: go build ./internal/api/anizip/...
+
+      - name: Push rebased branch
+        if: steps.rebase.outputs.changed == 'true'
+        run: git push --force-with-lease origin jp-meta
+
+      - name: Report success
+        if: steps.rebase.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh issue list --repo "${{ github.repository }}" --label upstream-sync --state open --json number,title \
+            --jq '.[] | select(.title | startswith("jp-meta: rebase conflict")) | .number' \
+            | xargs -r -I{} gh issue close {} --repo "${{ github.repository }}" \
+              --comment "Resolved automatically: jp-meta now rebased onto ${{ steps.latest.outputs.tag }}."
+
+      - name: Open issue on conflict or build failure
+        if: failure()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          EXISTING=$(gh issue list --repo "${{ github.repository }}" --label upstream-sync --state open --json number --jq '.[0].number')
+          if [ -z "$EXISTING" ]; then
+            gh issue create --repo "${{ github.repository }}" \
+              --title "jp-meta: rebase conflict onto ${{ steps.latest.outputs.tag }}" \
+              --label upstream-sync \
+              --body "Automatic rebase of \`jp-meta\` onto upstream tag \`${{ steps.latest.outputs.tag }}\` failed (conflict or build error). Resolve manually:
+
+          \`\`\`
+          git fetch upstream --tags
+          git checkout jp-meta
+          git rebase ${{ steps.latest.outputs.tag }}
+          # resolve conflicts, then:
+          git push --force-with-lease origin jp-meta
+          \`\`\`"
+          fi
