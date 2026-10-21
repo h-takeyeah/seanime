@@ -1,6 +1,6 @@
 {
   "version": "0.1.9",
-  "electronVersion": "42.4.0",
+  "electronVersion": "42.11.18",
   "commit": "87d37c25ce642351529ea2490c9f2f724d1d59ae",
   "packages": {
     "@mpv-prism/core": {
