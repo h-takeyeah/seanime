@@ -120,11 +120,13 @@ func (u *Updater) GetLatestRelease(channel string) (*Release, error) {
 		return u.LatestRelease, nil
 	}
 
-	fallbackChannel, ok := u.fetchGithubStatus()
-	// if github is down, use fallback channel
-	if !ok {
-		u.UpdateChannel = fallbackChannel
-		channel = fallbackChannel
+	if channel == "seanime" || channel == "seanime_nightly" {
+		fallbackChannel, ok := u.fetchGithubStatus()
+		// if the seanime.app website is down, use fallback channel
+		if !ok {
+			u.UpdateChannel = fallbackChannel
+			channel = fallbackChannel
+		}
 	}
 
 	release, err := u.fetchLatestRelease(channel)
