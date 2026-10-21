@@ -29,10 +29,13 @@
     "@types/node": "^24.13.2",
     "cross-env": "^7.0.3",
     "electron": "42.4.0",
-    "electron-builder": "^25.1.8",
+    "electron-builder": "^26.18.0",
     "typescript": "^5.9.3"
   },
   "build": {
+    "toolsets": {
+      "appimage": "1.0.3"
+    },
     "electronDownload": {
       "mirror": "https://seanime.app/assets/electron/",
       "customDir": "v42.4.0"
@@ -98,10 +101,12 @@
           ]
         }
       ],
-      "category": "Entertainment",
+      "category": "AudioVideo;Audio;Video;Player;TV;",
       "artifactName": "seanime-denshi-${version}_Linux_${arch}.${ext}",
       "desktop": {
-        "StartupWMClass": "seanime-denshi"
+        "entry": {
+          "StartupWMClass": "seanime-denshi"
+        }
       }
     },
     "nsis": {
