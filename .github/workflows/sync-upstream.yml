@@ -2,7 +2,7 @@ name: Sync jp-meta with upstream
 
 on:
   schedule:
-    - cron: "0 18 * * *" # 03:00 JST
+    - cron: "0 18 * * 1" # 03:00 JST, every Monday
   workflow_dispatch: {}
 
 permissions:
