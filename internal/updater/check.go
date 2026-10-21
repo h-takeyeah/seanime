@@ -16,7 +16,7 @@ import (
 // This allows updates even if Seanime is removed from GitHub
 var (
 	websiteUrl           = "https://seanime.app/api/release"
-	fallbackGithubUrl    = "https://api.github.com/repos/5rahim/seanime/releases/latest"
+	fallbackGithubUrl    = "https://api.github.com/repos/h-takeyeah/seanime/releases/latest"
 	githubCheckUrl       = "https://seanime.app/api/github-status"
 	seanimeStableUrl     = "https://seanime.app/api/updates/stable/stable_server.json"
 	seanimeNightlyUrl    = "https://seanime.app/api/updates/nightly/nightly_server.json"
@@ -156,19 +156,11 @@ func (u *Updater) fetchLatestRelease(channel string) (*Release, error) {
 	case "github":
 		fallthrough
 	default:
-		apiRelease, err := u.fetchLatestReleaseFromApi(websiteUrl)
+		ghRelease, err := u.fetchLatestReleaseFromGitHub()
 		if err != nil {
-			if u.logger != nil {
-				u.logger.Warn().Err(err).Msg("updater: Failed to fetch from GitHub, falling back to Seanime")
-			}
-			ghRelease, ghErr := u.fetchLatestReleaseFromGitHub()
-			if ghErr != nil {
-				return nil, err // Return original error if fallback also fails
-			}
-			release = ghRelease
-		} else {
-			release = apiRelease
+			return nil, err
 		}
+		release = ghRelease
 	}
 
 	return release, nil
