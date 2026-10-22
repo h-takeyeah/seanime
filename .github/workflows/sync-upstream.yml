@@ -68,6 +68,17 @@ jobs:
         if: steps.rebase.outputs.changed == 'true'
         run: git push --force-with-lease origin jp-meta
 
+      - name: Tag fork release
+        if: steps.rebase.outputs.changed == 'true'
+        run: |
+          TAG="${{ steps.latest.outputs.tag }}"
+          if git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null 2>&1; then
+            echo "Tag $TAG already exists on origin (likely copied at fork time); skipping auto-tag."
+          else
+            git tag "$TAG"
+            git push origin "$TAG"
+          fi
+
       - name: Report success
         if: steps.rebase.outputs.changed == 'true'
         env:
