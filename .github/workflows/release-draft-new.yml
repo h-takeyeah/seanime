@@ -25,6 +25,8 @@ jobs:
         uses: actions/setup-node@v7
         with:
           node-version: '24'
+          cache: 'npm'
+          cache-dependency-path: 'seanime-web/package-lock.json'
 
       # outputs in "seanime-web/out/" and "seanime-web/out-denshi/"
       - name: Install dependencies and build web app
