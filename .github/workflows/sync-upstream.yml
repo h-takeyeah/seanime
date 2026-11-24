@@ -38,8 +38,10 @@ jobs:
           git remote add upstream https://github.com/5rahim/seanime.git
           # Fetch into refs/upstream-tags/* instead of refs/tags/*, so this
           # never collides with the same-named tag we later create for our
-          # own fork release (which points at a different commit).
-          git fetch upstream "refs/tags/${{ steps.latest.outputs.tag }}:refs/upstream-tags/${{ steps.latest.outputs.tag }}"
+          # own fork release (which points at a different commit). --no-tags
+          # is required: git auto-follows tags onto refs/tags/* by default
+          # even when an explicit refspec target is given.
+          git fetch --no-tags upstream "refs/tags/${{ steps.latest.outputs.tag }}:refs/upstream-tags/${{ steps.latest.outputs.tag }}"
 
       - name: Rebase onto latest tag
         id: rebase
