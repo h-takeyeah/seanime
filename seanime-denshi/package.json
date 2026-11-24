@@ -28,7 +28,7 @@
     "@types/archiver": "^8.0.0",
     "@types/node": "^24.13.2",
     "cross-env": "^7.0.3",
-    "electron": "42.4.0",
+    "electron": "42.11.18",
     "electron-builder": "^26.18.0",
     "typescript": "^5.9.3"
   },
