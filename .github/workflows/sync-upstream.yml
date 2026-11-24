@@ -74,7 +74,10 @@ jobs:
           if git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null 2>&1; then
             echo "Tag $TAG already exists on origin (likely copied at fork time); skipping auto-tag."
           else
-            git tag "$TAG"
+            # -f: "git fetch upstream --tags" already created a local ref named
+            # $TAG pointing at upstream's commit; retarget it to our rebased
+            # HEAD before pushing to origin.
+            git tag -f "$TAG"
             git push origin "$TAG"
           fi
 
