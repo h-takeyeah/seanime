@@ -8,6 +8,7 @@ on:
 permissions:
   contents: write
   issues: write
+  actions: write
 
 jobs:
   sync:
@@ -74,14 +75,25 @@ jobs:
         run: git push --force-with-lease origin jp-meta
 
       - name: Tag fork release
+        id: tag
         run: |
           TAG="${{ steps.latest.outputs.tag }}"
           if git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null 2>&1; then
             echo "Tag $TAG already exists on origin (likely copied at fork time); skipping auto-tag."
+            echo "created=false" >> "$GITHUB_OUTPUT"
           else
             git tag "$TAG"
             git push origin "$TAG"
+            echo "created=true" >> "$GITHUB_OUTPUT"
           fi
+
+      - name: Trigger release build
+        if: steps.tag.outputs.created == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # GITHUB_TOKEN pushes don't trigger other workflows' push events.
+          gh workflow run "Release Draft" --repo "${{ github.repository }}" --ref "${{ steps.latest.outputs.tag }}"
 
       - name: Report success
         env:
